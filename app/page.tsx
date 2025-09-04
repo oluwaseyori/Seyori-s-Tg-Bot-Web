@@ -4,10 +4,10 @@ import React, { useEffect, useMemo, useState } from 'react'
 
 const CONFIG = {
   botName: "SEYORI'S TG BOT",
-  botUsername: 'seyorisquidgamebot',
+  botUsername: 'seyoritgbot',
   ownerUsername: 's3yori',
-  ownerEmail: '',
-  brandTagline: 'Neon-green hacker theme. Admin tools, games, and Stars support.'
+  ownerEmail: 'havefun777444@gmail.cpm',
+  brandTagline: 'Seyoris Telegram Bot Web.'
 }
 
 type Scope = 'anywhere' | 'group-only' | 'dm-only'
@@ -32,7 +32,6 @@ const COMMANDS: CommandBlock[] = [
     summary: 'General commands anyone can use to discover the bot.',
     rows: [
       { cmd: '/start', description: 'Show welcome and quick menu.', args: '', scope: 'anywhere', role: 'any' },
-      { cmd: '/help', description: 'Brief help and links.', args: '', scope: 'anywhere', role: 'any' },
       { cmd: '/menu', description: 'Open the main menu.', args: '', scope: 'anywhere', role: 'any' },
     ],
   },
@@ -40,20 +39,20 @@ const COMMANDS: CommandBlock[] = [
     plugin: 'Donate (Stars)',
     summary: 'Support the project with Telegram Stars (XTR).',
     rows: [
-      { cmd: '/donate', args: '<stars>', description: 'Create a Stars invoice for the given amount.', scope: 'anywhere', role: 'any' },
+      { cmd: '/donate', args: '(stars)', description: 'Create a Stars invoice for the given amount.', scope: 'anywhere', role: 'any' },
       { cmd: '/balance', description: 'Show current Stars balance.', args: '', scope: 'anywhere', role: 'owner' },
       { cmd: '/gifts', description: 'List available gifts (live).', args: '', scope: 'anywhere', role: 'owner' },
-      { cmd: '/buy', args: '<gift_id>', description: 'Buy a gift using Stars and send to OWNER_ID.', scope: 'anywhere', role: 'owner' },
+      { cmd: '/buy', args: '(gift_id)', description: 'Buy a gift using Stars and send to OWNER_ID.', scope: 'anywhere', role: 'owner' },
     ],
   },
   {
     plugin: 'Games',
     summary: 'Party games with smart rules and stats.',
     rows: [
-      { cmd: '/wcg', args: '[turn_seconds] [min_len] [start_letter]', description: 'Word Chain with lobby, auto-start, and stats.', scope: 'anywhere', role: 'any' },
-      { cmd: '/matchgame', args: '[size=4]', description: 'Memory Match; starter-only plays.', scope: 'anywhere', role: 'any' },
+      { cmd: '/wcg', args: '', description: 'Word Chain with lobby, auto-start, and stats.', scope: 'anywhere', role: 'any' },
+      { cmd: '/matchgame', args: '', description: 'Memory Match; starter-only plays.', scope: 'anywhere', role: 'any' },
       { cmd: '/xo', args: '', description: 'Tic-Tac-Toe.', scope: 'anywhere', role: 'any' },
-      { cmd: '/redgreen', args: '', description: 'Red/Green Light with sqlite score.', scope: 'anywhere', role: 'any' },
+      { cmd: '/redgreen', args: '', description: 'Red/Green Light game.', scope: 'anywhere', role: 'any' },
     ],
   },
   {
