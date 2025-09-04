@@ -6,7 +6,7 @@ const CONFIG = {
   botName: "SEYORI'S TG BOT",
   botUsername: 'seyoritgbot',
   ownerUsername: 's3yori',
-  ownerEmail: 'havefun777444@gmail.cpm', // change to .com if that was a typo
+  ownerEmail: 'havefun777444@gmail.com', 
   brandTagline: 'Seyoris Telegram Bot Web.'
 }
 
