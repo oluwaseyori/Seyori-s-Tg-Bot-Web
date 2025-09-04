@@ -6,7 +6,7 @@ const CONFIG = {
   botName: "SEYORI'S TG BOT",
   botUsername: 'seyoritgbot',
   ownerUsername: 's3yori',
-  ownerEmail: 'havefun777444@gmail.cpm',
+  ownerEmail: 'havefun777444@gmail.cpm', // change to .com if that was a typo
   brandTagline: 'Seyoris Telegram Bot Web.'
 }
 
@@ -216,35 +216,67 @@ export default function Page() {
 
       {/* Commands */}
       <section id="commands" className="mx-auto max-w-6xl px-4 py-12">
-        <div className="flex items-end justify-between gap-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h2 className="text-xl font-semibold text-green-300">Commands</h2>
-            <p className="mt-1 text-sm text-green-600">Slash-only, organized by plugin. Use filters to explore.</p>
+            <p className="mt-1 text-sm text-green-600">
+              Slash-only, organized by plugin. Use filters to explore.
+            </p>
           </div>
-          <div className="hidden items-center gap-2 md:flex">
-            <select value={pluginFilter} onChange={e => setPluginFilter(e.target.value)} className="rounded-xl border border-green-800 bg-black px-3 py-2 text-sm text-green-300 shadow-sm focus:outline-none">
-              {plugins.map(p => <option key={p} value={p} className="bg-black text-green-300">{p}</option>)}
+
+          {/* Always-visible filters; stack on mobile */}
+          <div className="grid w-full grid-cols-1 gap-2 sm:w-auto sm:grid-cols-3">
+            <select
+              value={pluginFilter}
+              onChange={e => setPluginFilter(e.target.value)}
+              className="rounded-xl border border-green-800 bg-black px-3 py-2 text-sm text-green-300 focus:outline-none"
+            >
+              {plugins.map(p => (
+                <option key={p} value={p} className="bg-black text-green-300">
+                  {p}
+                </option>
+              ))}
             </select>
-            <select value={roleFilter} onChange={e => setRoleFilter(e.target.value as any)} className="rounded-xl border border-green-800 bg-black px-3 py-2 text-sm text-green-300 shadow-sm focus:outline-none">
-              {['All','any','admin','owner'].map(p => <option key={p} value={p} className="bg-black text-green-300">{p}</option>)}
+
+            <select
+              value={roleFilter}
+              onChange={e => setRoleFilter(e.target.value as any)}
+              className="rounded-xl border border-green-800 bg-black px-3 py-2 text-sm text-green-300 focus:outline-none"
+            >
+              {['All','any','admin','owner'].map(p => (
+                <option key={p} value={p} className="bg-black text-green-300">
+                  {p}
+                </option>
+              ))}
             </select>
-            <select value={scopeFilter} onChange={e => setScopeFilter(e.target.value as any)} className="rounded-xl border border-green-800 bg-black px-3 py-2 text-sm text-green-300 shadow-sm focus:outline-none">
-              {['All','anywhere','group-only','dm-only'].map(p => <option key={p} value={p} className="bg-black text-green-300">{p}</option>)}
+
+            <select
+              value={scopeFilter}
+              onChange={e => setScopeFilter(e.target.value as any)}
+              className="rounded-xl border border-green-800 bg-black px-3 py-2 text-sm text-green-300 focus:outline-none"
+            >
+              {['All','anywhere','group-only','dm-only'].map(p => (
+                <option key={p} value={p} className="bg-black text-green-300">
+                  {p}
+                </option>
+              ))}
             </select>
           </div>
         </div>
 
-        <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+        {/* Search */}
+        <div className="mt-4">
           <input
             placeholder="Search commands…"
             value={query}
             onChange={e => setQuery(e.target.value)}
-            className="w-full rounded-2xl border border-green-800 bg-black px-4 py-2 text-sm text-green-300 placeholder-green-700 shadow-sm focus:outline-none"
+            className="w-full rounded-2xl border border-green-800 bg-black px-4 py-2 text-sm text-green-300 placeholder-green-700 focus:outline-none"
           />
         </div>
 
-        <div className="mt-6 overflow-hidden rounded-3xl border border-green-900 bg-black shadow-sm" style={{ boxShadow: '0 0 24px rgba(57,255,20,0.10)' }}>
-          <table className="min-w-full text-left text-sm">
+        {/* H-scroll table for narrow screens */}
+        <div className="mt-6 overflow-x-auto rounded-3xl border border-green-900 bg-black shadow-sm" style={{ boxShadow: '0 0 24px rgba(57,255,20,0.10)' }}>
+          <table className="min-w-[900px] text-left text-sm">
             <thead className="bg-[#0b0f0b] text-green-300">
               <tr>
                 <th className="px-4 py-3 border-b border-green-900">Plugin</th>
@@ -322,23 +354,75 @@ function IdeaForm() {
   const [email, setEmail] = useState('')
   const [message, setMessage] = useState('')
 
-  const encoded = encodeURIComponent(`Idea from ${name || 'Anonymous'}\n\n${message}\n\nContact: ${email || 'n/a'}`)
-  const tgHref = `https://t.me/${CONFIG.ownerUsername}`
-  const mailHref = `mailto:${CONFIG.ownerEmail}?subject=${encodeURIComponent("SEYORI'S TG BOT — Idea/Suggestion")}&body=${encoded}`
+  const buildText = () =>
+    `Idea from ${name || 'Anonymous'}\n\n${message || '(no message)'}\n\nContact: ${email || 'n/a'}\n\nFrom: ${typeof window !== 'undefined' ? window.location.href : ''}`
+
+  const sendViaTelegram = (e: React.MouseEvent) => {
+    e.preventDefault()
+    const tg = (window as any)?.Telegram?.WebApp
+    const text = buildText()
+    const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(
+      typeof window !== 'undefined' ? window.location.href : ''
+    )}&text=${encodeURIComponent(text)}`
+    if (tg?.openTelegramLink) tg.openTelegramLink(shareUrl)
+    else window.open(shareUrl, '_blank')
+  }
+
+  const sendViaEmail = (e: React.MouseEvent) => {
+    e.preventDefault()
+    if (!CONFIG.ownerEmail) return
+    const subject = "SEYORI'S TG BOT — Idea/Suggestion"
+    const mailto = `mailto:${CONFIG.ownerEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(buildText())}`
+    window.location.href = mailto
+  }
 
   return (
     <form onSubmit={(e) => e.preventDefault()} className="mt-4 space-y-3">
       <div className="grid gap-3 sm:grid-cols-2">
-        <input value={name} onChange={e => setName(e.target.value)} placeholder="Your name" className="rounded-2xl border border-green-800 bg-black px-4 py-2 text-sm text-green-300 placeholder-green-700 shadow-sm focus:outline-none" />
-        <input value={email} onChange={e => setEmail(e.target.value)} placeholder="Your email (optional)" type="email" className="rounded-2xl border border-green-800 bg-black px-4 py-2 text-sm text-green-300 placeholder-green-700 shadow-sm focus:outline-none" />
+        <input
+          value={name}
+          onChange={e => setName(e.target.value)}
+          placeholder="Your name"
+          className="rounded-2xl border border-green-800 bg-black px-4 py-2 text-sm text-green-300 placeholder-green-700 focus:outline-none"
+        />
+        <input
+          value={email}
+          onChange={e => setEmail(e.target.value)}
+          placeholder="Your email (optional)"
+          type="email"
+          className="rounded-2xl border border-green-800 bg-black px-4 py-2 text-sm text-green-300 placeholder-green-700 focus:outline-none"
+        />
       </div>
-      <textarea value={message} onChange={e => setMessage(e.target.value)} placeholder="Describe your idea or suggestion in detail…" rows={5} className="w-full rounded-2xl border border-green-800 bg-black px-4 py-2 text-sm text-green-300 placeholder-green-700 shadow-sm focus:outline-none" />
+      <textarea
+        value={message}
+        onChange={e => setMessage(e.target.value)}
+        placeholder="Describe your idea or suggestion in detail…"
+        rows={5}
+        className="w-full rounded-2xl border border-green-800 bg-black px-4 py-2 text-sm text-green-300 placeholder-green-700 focus:outline-none"
+      />
       <div className="flex flex-wrap gap-3">
-        <a href={tgHref} target="_blank" rel="noreferrer noopener" className="inline-flex items-center justify-center rounded-2xl bg-green-500 px-4 py-2 text-sm font-semibold text-black hover:bg-green-400" style={{ boxShadow: '0 0 18px rgba(57,255,20,0.25)' }}>Send via Telegram</a>
+        <button
+          onClick={sendViaTelegram}
+          className="inline-flex items-center justify-center rounded-2xl bg-green-500 px-4 py-2 text-sm font-semibold text-black hover:bg-green-400"
+          style={{ boxShadow: '0 0 18px rgba(57,255,20,0.25)' }}
+          type="button"
+        >
+          Send via Telegram
+        </button>
         {CONFIG.ownerEmail && (
-          <a href={mailHref} className="inline-flex items-center justify-center rounded-2xl border border-green-500 px-4 py-2 text-sm font-semibold text-green-400 hover:bg-green-900/10" style={{ boxShadow: '0 0 18px rgba(57,255,20,0.25)' }}>Send via Email</a>
+          <button
+            onClick={sendViaEmail}
+            className="inline-flex items-center justify-center rounded-2xl border border-green-500 px-4 py-2 text-sm font-semibold text-green-400 hover:bg-green-900/10"
+            style={{ boxShadow: '0 0 18px rgba(57,255,20,0.25)' }}
+            type="button"
+          >
+            Send via Email
+          </button>
         )}
       </div>
+      <p className="text-xs text-green-700">
+        Tip: Telegram opens a share sheet with your text preloaded. Choose the chat (e.g., the owner) to send it.
+      </p>
     </form>
   )
 }
