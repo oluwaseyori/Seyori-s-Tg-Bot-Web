@@ -1,7 +1,20 @@
-export const runtime = 'nodejs' 
+export const runtime = 'nodejs'
+
+type From = {
+  id?: number
+  username?: string | null
+  first_name?: string | null
+  last_name?: string | null
+  language_code?: string | null
+} | null
+
 export async function POST(req: Request) {
   try {
-    const { name, email, message } = await req.json()
+    const { name, email, message, from }: { name?: string; email?: string; message?: string; from?: From } = await req.json()
+
+    if (!message || String(message).trim().length < 5) {
+      return new Response('Message too short', { status: 400 })
+    }
 
     const BOT_TOKEN = process.env.BOT_TOKEN
     const OWNER_ID = process.env.OWNER_ID
@@ -9,12 +22,20 @@ export async function POST(req: Request) {
       return new Response('Server not configured: BOT_TOKEN and OWNER_ID are required', { status: 500 })
     }
 
+    const who =
+      from
+        ? (from.username ? `@${from.username}` : [from.first_name, from.last_name].filter(Boolean).join(' ') || `id ${from.id}`)
+        : 'web user'
+
+    const header = `New WebApp message from ${who}${from?.id ? ` (id ${from.id})` : ''}`
     const text =
-      `📥 New WebApp submission\n` +
-      `Name: ${name || 'Anonymous'}\n` +
-      `Email: ${email || 'n/a'}\n\n` +
-      `Message:\n${message || '(no message)'}`
-    
+`${header}
+Name: ${name || 'Anonymous'}
+Email: ${email || 'n/a'}
+
+Message:
+${message}`
+
     const resp = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -26,7 +47,7 @@ export async function POST(req: Request) {
     }
 
     return Response.json({ ok: true })
-  } catch (err) {
+  } catch {
     return new Response('Bad Request', { status: 400 })
   }
 }
