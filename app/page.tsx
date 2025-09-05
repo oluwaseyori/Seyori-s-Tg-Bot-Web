@@ -297,7 +297,7 @@ export default function Page() {
   )
 }
 
-/* ---- IdeaForm: requires message, prefills name from Telegram, posts to /api/idea ---- */
+/* ---- IdeaForm: centered button, no Telegram MainButton ---- */
 function IdeaForm() {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
@@ -307,13 +307,7 @@ function IdeaForm() {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    try {
-      const tg = (window as any)?.Telegram?.WebApp
-      const u = tg?.initDataUnsafe?.user
-      if (!u) return
-      const display = u.username ? `@${u.username}` : [u.first_name, u.last_name].filter(Boolean).join(' ')
-      if (display && !name) setName(display)
-    } catch {}
+    try { (window as any)?.Telegram?.WebApp?.MainButton?.hide?.() } catch {}
   }, [])
 
   const handleSend = async () => {
@@ -351,34 +345,19 @@ function IdeaForm() {
       if (!res.ok) throw new Error(await res.text())
 
       setSent(true)
-      const h = (window as any)?.Telegram?.WebApp?.HapticFeedback
-      ;(h?.notificationOccurred && h.notificationOccurred('success'))
-      ;(window as any)?.Telegram?.WebApp?.showAlert?.('Sent to owner')
+      tg?.HapticFeedback?.notificationOccurred?.('success')
+      tg?.showAlert?.('Sent to owner')
       setMessage('')
-    } catch (e: any) {
+    } catch {
       setError('Failed to send. Please try again.')
-      const h = (window as any)?.Telegram?.WebApp?.HapticFeedback
-      ;(h?.notificationOccurred && h.notificationOccurred('error'))
+      ;(window as any)?.Telegram?.WebApp?.HapticFeedback?.notificationOccurred?.('error')
     } finally {
       setSending(false)
     }
   }
 
-  useEffect(() => {
-    const tg = (window as any)?.Telegram?.WebApp
-    if (!tg?.MainButton) return
-    const onClick = () => handleSend()
-    tg.MainButton.setText('Send to Owner')
-    tg.MainButton.show()
-    tg.MainButton.onClick(onClick)
-    return () => {
-      tg.MainButton.offClick(onClick)
-      tg.MainButton.hide()
-    }
-  }, [])
-
   return (
-    <form onSubmit={(e) => e.preventDefault()} className="mt-4 space-y-3">
+    <form onSubmit={(e) => e.preventDefault()} className="mt-4 space-y-4">
       <div className="grid gap-3 sm:grid-cols-2">
         <input
           value={name}
@@ -394,6 +373,7 @@ function IdeaForm() {
           className="rounded-2xl border border-green-800 bg-black px-4 py-2 text-sm text-green-300 placeholder-green-700 focus:outline-none"
         />
       </div>
+
       <textarea
         value={message}
         onChange={e => setMessage(e.target.value)}
@@ -402,20 +382,25 @@ function IdeaForm() {
         required
         className="w-full rounded-2xl border border-green-800 bg-black px-4 py-2 text-sm text-green-300 placeholder-green-700 focus:outline-none"
       />
-      <div className="flex flex-wrap items-center gap-3">
+
+      {/* Centered action + messages */}
+      <div className="flex w-full justify-center">
         <button
           onClick={handleSend}
           type="button"
           disabled={sending}
-          className="inline-flex items-center justify-center rounded-2xl bg-green-500 px-4 py-2 text-sm font-semibold text-black hover:bg-green-400 active:scale-[.99] disabled:opacity-60"
+          className="inline-flex items-center justify-center rounded-2xl bg-green-500 px-6 py-2 text-sm font-semibold text-black hover:bg-green-400 active:scale-[.99] disabled:opacity-60"
           style={{ boxShadow: '0 0 18px rgba(57,255,20,0.25)' }}
         >
           {sending ? 'Sending…' : (sent ? 'Sent' : 'Send to Owner')}
         </button>
-        {error && <span className="text-xs text-red-400">{error}</span>}
-        {sent && !error && <span className="text-xs text-green-500">Delivered to owner.</span>}
       </div>
-      <p className="text-xs text-green-700">We require a short message to avoid empty submissions.</p>
+
+      <div className="text-center">
+        {error && <p className="text-xs text-red-400">{error}</p>}
+        {sent && !error && <p className="text-xs text-green-500">Delivered to owner.</p>}
+      </div>
     </form>
   )
 }
+
