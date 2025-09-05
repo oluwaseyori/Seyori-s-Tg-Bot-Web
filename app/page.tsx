@@ -297,7 +297,7 @@ export default function Page() {
   )
 }
 
-/* ---- IdeaForm: POST to /api/idea (server sends to owner directly) ---- */
+/* ---- IdeaForm: requires message, prefills name from Telegram, posts to /api/idea ---- */
 function IdeaForm() {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
@@ -306,35 +306,70 @@ function IdeaForm() {
   const [sent, setSent] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const payload = {
-    name: name || 'Anonymous',
-    email: email || 'n/a',
-    message: message || '(no message)',
-  }
+  // Prefill name from Telegram WebApp context (if available)
+  useEffect(() => {
+    try {
+      const tg = (window as any)?.Telegram?.WebApp
+      const u = tg?.initDataUnsafe?.user
+      if (!u) return
+      const display = u.username ? `@${u.username}` : [u.first_name, u.last_name].filter(Boolean).join(' ')
+      if (display && !name) setName(display)
+    } catch {}
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const handleSend = async () => {
     setError(null)
+    setSent(false)
+
+    // Require a message
+    const msg = (message || '').trim()
+    if (msg.length < 5) {
+      setError('Please write a short message (min 5 characters).')
+      return
+    }
+
     setSending(true)
     try {
+      // Attach TG sender metadata when available
+      const tg = (window as any)?.Telegram?.WebApp
+      const u = tg?.initDataUnsafe?.user
+      const from = u ? {
+        id: u.id,
+        username: u.username || null,
+        first_name: u.first_name || null,
+        last_name: u.last_name || null,
+        language_code: u.language_code || null,
+      } : null
+
       const res = await fetch('/api/idea', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({
+          name: name || (from?.username ? `@${from.username}` : 'Anonymous'),
+          email: email || 'n/a',
+          message: msg,
+          from,
+        }),
       })
       if (!res.ok) throw new Error(await res.text())
+
       setSent(true)
-      const tg = (window as any)?.Telegram?.WebApp
-      tg?.HapticFeedback?.notificationOccurred?.('success')
-      tg?.showAlert?.('Sent to owner ✅')
+      const h = (window as any)?.Telegram?.WebApp?.HapticFeedback
+      ;(h?.notificationOccurred && h.notificationOccurred('success'))
+      ;(window as any)?.Telegram?.WebApp?.showAlert?.('Sent to owner ✅')
+      // Optional: clear the form
+      setMessage('')
     } catch (e: any) {
       setError('Failed to send. Please try again.')
-      const tg = (window as any)?.Telegram?.WebApp
-      tg?.HapticFeedback?.notificationOccurred?.('error')
+      const h = (window as any)?.Telegram?.WebApp?.HapticFeedback
+      ;(h?.notificationOccurred && h.notificationOccurred('error'))
     } finally {
       setSending(false)
     }
   }
 
+  // Also wire Telegram MainButton inside the WebApp
   useEffect(() => {
     const tg = (window as any)?.Telegram?.WebApp
     if (!tg?.MainButton) return
@@ -346,23 +381,48 @@ function IdeaForm() {
       tg.MainButton.offClick(onClick)
       tg.MainButton.hide()
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   return (
     <form onSubmit={(e) => e.preventDefault()} className="mt-4 space-y-3">
       <div className="grid gap-3 sm:grid-cols-2">
-        <input value={name} onChange={e => setName(e.target.value)} placeholder="Your name" className="rounded-2xl border border-green-800 bg-black px-4 py-2 text-sm text-green-300 placeholder-green-700 focus:outline-none" />
-        <input value={email} onChange={e => setEmail(e.target.value)} placeholder="Your email (optional)" type="email" className="rounded-2xl border border-green-800 bg-black px-4 py-2 text-sm text-green-300 placeholder-green-700 focus:outline-none" />
+        <input
+          value={name}
+          onChange={e => setName(e.target.value)}
+          placeholder="Your name"
+          className="rounded-2xl border border-green-800 bg-black px-4 py-2 text-sm text-green-300 placeholder-green-700 focus:outline-none"
+        />
+        <input
+          value={email}
+          onChange={e => setEmail(e.target.value)}
+          placeholder="Your email (optional)"
+          type="email"
+          className="rounded-2xl border border-green-800 bg-black px-4 py-2 text-sm text-green-300 placeholder-green-700 focus:outline-none"
+        />
       </div>
-      <textarea value={message} onChange={e => setMessage(e.target.value)} placeholder="Describe your idea or suggestion in detail…" rows={5} className="w-full rounded-2xl border border-green-800 bg-black px-4 py-2 text-sm text-green-300 placeholder-green-700 focus:outline-none" />
+      <textarea
+        value={message}
+        onChange={e => setMessage(e.target.value)}
+        placeholder="Describe your idea or suggestion in detail…"
+        rows={5}
+        required
+        className="w-full rounded-2xl border border-green-800 bg-black px-4 py-2 text-sm text-green-300 placeholder-green-700 focus:outline-none"
+      />
       <div className="flex flex-wrap items-center gap-3">
-        <button onClick={handleSend} type="button" disabled={sending} className="inline-flex items-center justify-center rounded-2xl bg-green-500 px-4 py-2 text-sm font-semibold text-black hover:bg-green-400 active:scale-[.99] disabled:opacity-60" style={{ boxShadow: '0 0 18px rgba(57,255,20,0.25)' }}>
+        <button
+          onClick={handleSend}
+          type="button"
+          disabled={sending}
+          className="inline-flex items-center justify-center rounded-2xl bg-green-500 px-4 py-2 text-sm font-semibold text-black hover:bg-green-400 active:scale-[.99] disabled:opacity-60"
+          style={{ boxShadow: '0 0 18px rgba(57,255,20,0.25)' }}
+        >
           {sending ? 'Sending…' : (sent ? 'Sent ✅' : 'Send to Owner')}
         </button>
         {error && <span className="text-xs text-red-400">{error}</span>}
         {sent && !error && <span className="text-xs text-green-500">Delivered to owner.</span>}
       </div>
-      <p className="text-xs text-green-700">This sends your message directly to the owner via the bot.</p>
+      <p className="text-xs text-green-700">We require a short message to avoid empty submissions.</p>
     </form>
   )
 }
