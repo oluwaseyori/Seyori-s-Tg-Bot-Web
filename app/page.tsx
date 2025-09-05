@@ -349,7 +349,7 @@ export default function Page() {
   )
 }
 
-/* ---- IdeaForm (Telegram only): pre-fills a DM or share sheet with typed content ---- */
+/* ---- IdeaForm (Telegram share sheet; robust Android/WebView support) ---- */
 function IdeaForm() {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
@@ -358,21 +358,27 @@ function IdeaForm() {
   const buildText = () =>
     `Name: ${name || 'Anonymous'}\nEmail: ${email || 'n/a'}\n\nMessage:\n${message || '(no message)'}`
   
-  const sendViaTelegram = (e: React.MouseEvent) => {
-    e.preventDefault()
+  const sendViaTelegram = () => {
+    const tg = (window as any)?.Telegram?.WebApp
     const text = buildText()
 
-    const owner = (CONFIG.ownerUsername || '').replace(/^@/, '')
-    const toOwner = `tg://resolve?domain=${owner}&text=${encodeURIComponent(text)}`
-    const tg = (window as any)?.Telegram?.WebApp
+    const shareLink = `https://t.me/share/url?text=${encodeURIComponent(text)}`
 
-    if (tg?.openTelegramLink) {
-      tg.openTelegramLink(toOwner)
-      return
+    try {
+      tg?.HapticFeedback?.impactOccurred?.('medium')
+
+      if (tg?.openTelegramLink) {
+        tg.openTelegramLink(shareLink)
+        return
+      }
+    } catch (_) {}
+
+    try {
+      window.location.href = shareLink
+    } catch (_) {
+      navigator.clipboard?.writeText(text).catch(() => {})
+      alert('Your message was copied. Please open Telegram and paste it into the chat.')
     }
-
-    const share = `https://t.me/share/url?text=${encodeURIComponent(text)}`
-    window.open(share, '_blank')
   }
 
   return (
@@ -402,15 +408,15 @@ function IdeaForm() {
       <div className="flex flex-wrap gap-3">
         <button
           onClick={sendViaTelegram}
-          className="inline-flex items-center justify-center rounded-2xl bg-green-500 px-4 py-2 text-sm font-semibold text-black hover:bg-green-400"
-          style={{ boxShadow: '0 0 18px rgba(57,255,20,0.25)' }}
           type="button"
+          className="inline-flex items-center justify-center rounded-2xl bg-green-500 px-4 py-2 text-sm font-semibold text-black hover:bg-green-400 active:scale-[.99]"
+          style={{ boxShadow: '0 0 18px rgba(57,255,20,0.25)' }}
         >
           Send via Telegram
         </button>
       </div>
       <p className="text-xs text-green-700">
-        Tip: If this opens the share sheet, pick the owner chat and the text will be prefilled.
+        This opens Telegram’s share panel with your message prefilled. Pick the owner chat to send it.
       </p>
     </form>
   )
