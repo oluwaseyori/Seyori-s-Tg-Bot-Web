@@ -5,8 +5,8 @@ import React, { useEffect, useMemo, useState } from 'react'
 const CONFIG = {
   botName: "SEYORI'S TG BOT",
   botUsername: 'seyoritgbot',
-  ownerUsername: 's3yori',                // for display/links only
-  ownerEmail: 'havefun777444@gmail.cpm',  // not used in IdeaForm anymore
+  ownerUsername: 's3yori',             
+  ownerEmail: 'havefun777444@gmail.com',  
   brandTagline: 'Seyoris Telegram Bot Web.',
 }
 
@@ -346,7 +346,6 @@ function IdeaForm() {
       tg.MainButton.offClick(onClick)
       tg.MainButton.hide()
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   return (
