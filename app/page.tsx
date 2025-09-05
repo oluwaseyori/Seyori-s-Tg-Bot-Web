@@ -5,9 +5,9 @@ import React, { useEffect, useMemo, useState } from 'react'
 const CONFIG = {
   botName: "SEYORI'S TG BOT",
   botUsername: 'seyoritgbot',
-  ownerUsername: 's3yori',               
-  ownerEmail: 'havefun777444@gmail.com', 
-  brandTagline: 'Seyoris Telegram Bot Web.'
+  ownerUsername: 's3yori',              
+  ownerEmail: 'havefun777444@gmail.com',
+  brandTagline: 'Seyoris Telegram Bot Web.',
 }
 
 type Scope = 'anywhere' | 'group-only' | 'dm-only'
@@ -349,37 +349,53 @@ export default function Page() {
   )
 }
 
-/* ---- IdeaForm (Telegram share sheet; robust Android/WebView support) ---- */
+/* ---- IdeaForm: direct to owner via Telegram.WebApp.sendData ---- */
 function IdeaForm() {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [message, setMessage] = useState('')
 
-  const buildText = () =>
-    `Name: ${name || 'Anonymous'}\nEmail: ${email || 'n/a'}\n\nMessage:\n${message || '(no message)'}`
-  
-  const sendViaTelegram = () => {
-    const tg = (window as any)?.Telegram?.WebApp
-    const text = buildText()
-
-    const shareLink = `https://t.me/share/url?text=${encodeURIComponent(text)}`
-
-    try {
-      tg?.HapticFeedback?.impactOccurred?.('medium')
-
-      if (tg?.openTelegramLink) {
-        tg.openTelegramLink(shareLink)
-        return
-      }
-    } catch (_) {}
-
-    try {
-      window.location.href = shareLink
-    } catch (_) {
-      navigator.clipboard?.writeText(text).catch(() => {})
-      alert('Your message was copied. Please open Telegram and paste it into the chat.')
-    }
+  const payload = {
+    kind: 'idea',
+    name: name || 'Anonymous',
+    email: email || 'n/a',
+    message: message || '(no message)',
+    ts: Date.now(),
   }
+
+  const handleSend = () => {
+    const tg = (window as any)?.Telegram?.WebApp
+    const data = JSON.stringify(payload)
+
+    if (tg?.sendData) {
+      try {
+        tg.HapticFeedback?.impactOccurred?.('medium')
+        tg.sendData(data)     
+        tg.showAlert?.("Sent to owner. You can close this now.")
+        return
+      } catch (_) {}
+    }
+
+    const text = `Name: ${payload.name}\nEmail: ${payload.email}\n\nMessage:\n${payload.message}`
+    navigator.clipboard?.writeText(text).catch(() => {})
+    alert("You're not inside Telegram. The message was copied — please paste it into @s3yori.")
+  }
+
+  useEffect(() => {
+    const tg = (window as any)?.Telegram?.WebApp
+    if (!tg?.MainButton) return
+
+    const onClick = () => handleSend()
+
+    tg.MainButton.setText('Send to Owner')
+    tg.MainButton.show()
+    tg.MainButton.onClick(onClick)
+
+    return () => {
+      tg.MainButton.offClick(onClick)
+      tg.MainButton.hide()
+    }
+  }, [])
 
   return (
     <form onSubmit={(e) => e.preventDefault()} className="mt-4 space-y-3">
@@ -407,16 +423,16 @@ function IdeaForm() {
       />
       <div className="flex flex-wrap gap-3">
         <button
-          onClick={sendViaTelegram}
+          onClick={handleSend}
           type="button"
           className="inline-flex items-center justify-center rounded-2xl bg-green-500 px-4 py-2 text-sm font-semibold text-black hover:bg-green-400 active:scale-[.99]"
           style={{ boxShadow: '0 0 18px rgba(57,255,20,0.25)' }}
         >
-          Send via Telegram
+          Send to Owner
         </button>
       </div>
       <p className="text-xs text-green-700">
-        This opens Telegram’s share panel with your message prefilled. Pick the owner chat to send it.
+        Inside Telegram, this sends your idea straight to the owner.
       </p>
     </form>
   )
