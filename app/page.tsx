@@ -5,7 +5,7 @@ import React, { useEffect, useMemo, useState } from 'react'
 const CONFIG = {
   botName: "SEYORI'S TG BOT",
   botUsername: 'seyoritgbot',
-  ownerUsername: 's3yori',
+  ownerUsername: 's3yori',               
   ownerEmail: 'havefun777444@gmail.com', 
   brandTagline: 'Seyoris Telegram Bot Web.'
 }
@@ -349,31 +349,30 @@ export default function Page() {
   )
 }
 
+/* ---- IdeaForm (Telegram only): pre-fills a DM or share sheet with typed content ---- */
 function IdeaForm() {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [message, setMessage] = useState('')
 
   const buildText = () =>
-    `Idea from ${name || 'Anonymous'}\n\n${message || '(no message)'}\n\nContact: ${email || 'n/a'}\n\nFrom: ${typeof window !== 'undefined' ? window.location.href : ''}`
-
+    `Name: ${name || 'Anonymous'}\nEmail: ${email || 'n/a'}\n\nMessage:\n${message || '(no message)'}`
+  
   const sendViaTelegram = (e: React.MouseEvent) => {
     e.preventDefault()
-    const tg = (window as any)?.Telegram?.WebApp
     const text = buildText()
-    const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(
-      typeof window !== 'undefined' ? window.location.href : ''
-    )}&text=${encodeURIComponent(text)}`
-    if (tg?.openTelegramLink) tg.openTelegramLink(shareUrl)
-    else window.open(shareUrl, '_blank')
-  }
 
-  const sendViaEmail = (e: React.MouseEvent) => {
-    e.preventDefault()
-    if (!CONFIG.ownerEmail) return
-    const subject = "SEYORI'S TG BOT — Idea/Suggestion"
-    const mailto = `mailto:${CONFIG.ownerEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(buildText())}`
-    window.location.href = mailto
+    const owner = (CONFIG.ownerUsername || '').replace(/^@/, '')
+    const toOwner = `tg://resolve?domain=${owner}&text=${encodeURIComponent(text)}`
+    const tg = (window as any)?.Telegram?.WebApp
+
+    if (tg?.openTelegramLink) {
+      tg.openTelegramLink(toOwner)
+      return
+    }
+
+    const share = `https://t.me/share/url?text=${encodeURIComponent(text)}`
+    window.open(share, '_blank')
   }
 
   return (
@@ -409,19 +408,9 @@ function IdeaForm() {
         >
           Send via Telegram
         </button>
-        {CONFIG.ownerEmail && (
-          <button
-            onClick={sendViaEmail}
-            className="inline-flex items-center justify-center rounded-2xl border border-green-500 px-4 py-2 text-sm font-semibold text-green-400 hover:bg-green-900/10"
-            style={{ boxShadow: '0 0 18px rgba(57,255,20,0.25)' }}
-            type="button"
-          >
-            Send via Email
-          </button>
-        )}
       </div>
       <p className="text-xs text-green-700">
-        Tip: Telegram opens a share sheet with your text preloaded. Choose the chat (e.g., the owner) to send it.
+        Tip: If this opens the share sheet, pick the owner chat and the text will be prefilled.
       </p>
     </form>
   )
