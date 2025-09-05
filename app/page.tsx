@@ -306,7 +306,6 @@ function IdeaForm() {
   const [sent, setSent] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // Prefill name from Telegram WebApp context (if available)
   useEffect(() => {
     try {
       const tg = (window as any)?.Telegram?.WebApp
@@ -315,14 +314,12 @@ function IdeaForm() {
       const display = u.username ? `@${u.username}` : [u.first_name, u.last_name].filter(Boolean).join(' ')
       if (display && !name) setName(display)
     } catch {}
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const handleSend = async () => {
     setError(null)
     setSent(false)
 
-    // Require a message
     const msg = (message || '').trim()
     if (msg.length < 5) {
       setError('Please write a short message (min 5 characters).')
@@ -331,7 +328,6 @@ function IdeaForm() {
 
     setSending(true)
     try {
-      // Attach TG sender metadata when available
       const tg = (window as any)?.Telegram?.WebApp
       const u = tg?.initDataUnsafe?.user
       const from = u ? {
@@ -357,8 +353,7 @@ function IdeaForm() {
       setSent(true)
       const h = (window as any)?.Telegram?.WebApp?.HapticFeedback
       ;(h?.notificationOccurred && h.notificationOccurred('success'))
-      ;(window as any)?.Telegram?.WebApp?.showAlert?.('Sent to owner ✅')
-      // Optional: clear the form
+      ;(window as any)?.Telegram?.WebApp?.showAlert?.('Sent to owner')
       setMessage('')
     } catch (e: any) {
       setError('Failed to send. Please try again.')
@@ -369,7 +364,6 @@ function IdeaForm() {
     }
   }
 
-  // Also wire Telegram MainButton inside the WebApp
   useEffect(() => {
     const tg = (window as any)?.Telegram?.WebApp
     if (!tg?.MainButton) return
@@ -381,7 +375,6 @@ function IdeaForm() {
       tg.MainButton.offClick(onClick)
       tg.MainButton.hide()
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   return (
@@ -417,7 +410,7 @@ function IdeaForm() {
           className="inline-flex items-center justify-center rounded-2xl bg-green-500 px-4 py-2 text-sm font-semibold text-black hover:bg-green-400 active:scale-[.99] disabled:opacity-60"
           style={{ boxShadow: '0 0 18px rgba(57,255,20,0.25)' }}
         >
-          {sending ? 'Sending…' : (sent ? 'Sent ✅' : 'Send to Owner')}
+          {sending ? 'Sending…' : (sent ? 'Sent' : 'Send to Owner')}
         </button>
         {error && <span className="text-xs text-red-400">{error}</span>}
         {sent && !error && <span className="text-xs text-green-500">Delivered to owner.</span>}
