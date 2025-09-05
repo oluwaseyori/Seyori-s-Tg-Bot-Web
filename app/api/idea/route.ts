@@ -1,6 +1,4 @@
-// app/api/idea/route.ts
-export const runtime = 'nodejs' // ensure Node fetch with env available
-
+export const runtime = 'nodejs' 
 export async function POST(req: Request) {
   try {
     const { name, email, message } = await req.json()
